@@ -1,0 +1,20 @@
+# Local editor settings.
+/.vscode/
+
+# Build directories and local CMake settings.
+build/
+cmake-build-*/
+CMakeUserPresets.json
+
+# Downloaded dependencies.
+/graph-calculator/dependencies/
+
+# Compiled binaries and debugging artifacts.
+*.exe
+*.dll
+*.o
+*.obj
+*.a
+*.lib
+*.pdb
+*.ilk

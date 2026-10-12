@@ -4,6 +4,8 @@
 #include <QPushButton>
 #include <QVBoxLayout>
 #include <QGridLayout>
+#include <QKeySequence>
+#include <QShortcut>
 
 int main(int argc, char *argv[])
 {
@@ -25,12 +27,18 @@ int main(int argc, char *argv[])
     display.setReadOnly(true);
 
     // Create the digit buttons.
+    QPushButton button0("0", &window);
     QPushButton button1("1", &window);
-
-    // TODO: Create buttons for 2, 3, and 0.
     QPushButton button2("2", &window);
     QPushButton button3("3", &window);
-    QPushButton button0("0", &window);
+    QPushButton button4("4", &window);
+    QPushButton button5("5", &window);
+    QPushButton button6("6", &window);
+    QPushButton button7("7", &window);
+    QPushButton button8("8", &window);
+    QPushButton button9("9", &window);
+
+    // Create action buttons
     QPushButton clearButton("C", &window);
     QPushButton deleteButton("DEL", &window);
 
@@ -42,20 +50,24 @@ int main(int argc, char *argv[])
     QGridLayout keypad;
     layout.addLayout(&keypad);
 
-    // Place the digit buttons in the grid.
-    keypad.addWidget(&button1, 0, 0);
+    // Place the buttons in the grid.
+    keypad.addWidget(&button0, 3, 1);
+    keypad.addWidget(&button1, 2, 0);
+    keypad.addWidget(&button2, 2, 1);
+    keypad.addWidget(&button3, 2, 2);
+    keypad.addWidget(&button4, 1, 0);
+    keypad.addWidget(&button5, 1, 1);
+    keypad.addWidget(&button6, 1, 2);
+    keypad.addWidget(&button7, 0, 0);
+    keypad.addWidget(&button8, 0, 1);
+    keypad.addWidget(&button9, 0, 2);
 
-    // TODO: Place the remaining buttons.
-    keypad.addWidget(&button2, 0, 1);
-    keypad.addWidget(&button3, 0, 2);
-    keypad.addWidget(&button0, 1, 1);
-    keypad.addWidget(&clearButton, 1, 0);
-    keypad.addWidget(&deleteButton, 1, 2);
+    keypad.addWidget(&clearButton, 3, 0);
+    keypad.addWidget(&deleteButton, 3, 2);
 
     // Define the clear action.
     auto clearInput = [&display]()
     {
-        // TODO: Reset the display to "0".
         display.setText("0");
     };
 
@@ -63,10 +75,6 @@ int main(int argc, char *argv[])
     auto deleteLast = [&display]()
     {
         QString current = display.text();
-
-        // TODO: Remove the last character.
-        // TODO: Replace an empty string with "0".
-        // TODO: Update the display.
         if (current.isEmpty() || current.size() == 1)
         {
             current = "0";
@@ -78,81 +86,110 @@ int main(int argc, char *argv[])
         display.setText(current);
     };
 
+    // Define the shared digit input action.
+    auto appendDigit = [&display](const QString &digit)
+    {
+        QString current = display.text();
+        if (current == "0")
+        {
+            current = digit;
+        }
+        else
+        {
+            current += digit;
+        }
+        display.setText(current);
+    };
+
     // Connect the button's clicked signal to update the display.
+    QObject::connect(
+        &button0,
+        &QPushButton::clicked,
+        &window,
+        [&appendDigit]()
+        {
+            appendDigit("0");
+        });
+
     QObject::connect(
         &button1,
         &QPushButton::clicked,
         &window,
-        [&display]()
+        [&appendDigit]()
         {
-            // Update the display when the button is clicked.
-            QString current = display.text();
-            if (current == "0")
-            {
-                current = "1";
-            }
-            else
-            {
-                current += "1";
-            }
-            display.setText(current);
+            appendDigit("1");
         });
 
     QObject::connect(
         &button2,
         &QPushButton::clicked,
         &window,
-        [&display]()
+        [&appendDigit]()
         {
-            // Update the display when the button is clicked.
-            QString current = display.text();
-            if (current == "0")
-            {
-                current = "2";
-            }
-            else
-            {
-                current += "2";
-            }
-            display.setText(current);
+            appendDigit("2");
         });
 
     QObject::connect(
         &button3,
         &QPushButton::clicked,
         &window,
-        [&display]()
+        [&appendDigit]()
         {
-            // Update the display when the button is clicked.
-            QString current = display.text();
-            if (current == "0")
-            {
-                current = "3";
-            }
-            else
-            {
-                current += "3";
-            }
-            display.setText(current);
+            appendDigit("3");
         });
 
     QObject::connect(
-        &button0,
+        &button4,
         &QPushButton::clicked,
         &window,
-        [&display]()
+        [&appendDigit]()
         {
-            // Update the display when the button is clicked.
-            QString current = display.text();
-            if (current == "0")
-            {
-                current = "0";
-            }
-            else
-            {
-                current += "0";
-            }
-            display.setText(current);
+            appendDigit("4");
+        });
+
+    QObject::connect(
+        &button5,
+        &QPushButton::clicked,
+        &window,
+        [&appendDigit]()
+        {
+            appendDigit("5");
+        });
+
+    QObject::connect(
+        &button6,
+        &QPushButton::clicked,
+        &window,
+        [&appendDigit]()
+        {
+            appendDigit("6");
+        });
+
+    QObject::connect(
+        &button7,
+        &QPushButton::clicked,
+        &window,
+        [&appendDigit]()
+        {
+            appendDigit("7");
+        });
+
+    QObject::connect(
+        &button8,
+        &QPushButton::clicked,
+        &window,
+        [&appendDigit]()
+        {
+            appendDigit("8");
+        });
+
+    QObject::connect(
+        &button9,
+        &QPushButton::clicked,
+        &window,
+        [&appendDigit]()
+        {
+            appendDigit("9");
         });
 
     QObject::connect(
@@ -164,6 +201,26 @@ int main(int argc, char *argv[])
     QObject::connect(
         &deleteButton,
         &QPushButton::clicked,
+        &window,
+        deleteLast);
+
+    // Create the clear shortcut.
+    QShortcut clearShortcut(QKeySequence(Qt::Key_Escape), &window);
+
+    // Connect Escape to the existing clear action.
+    QObject::connect(
+        &clearShortcut,
+        &QShortcut::activated,
+        &window,
+        clearInput);
+
+    // Create the delete shortcut.
+    QShortcut deleteShortcut(QKeySequence(Qt::Key_Backspace), &window);
+
+    // Connect the shortcut to the existing delete action.
+    QObject::connect(
+        &deleteShortcut,
+        &QShortcut::activated,
         &window,
         deleteLast);
 

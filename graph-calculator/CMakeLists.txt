@@ -12,5 +12,6 @@ qt_standard_project_setup()
 qt_add_executable(calculator
     main.cpp
     calculator.cpp
+    tokenizer.cpp
 )
 target_link_libraries(calculator PRIVATE Qt6::Widgets)

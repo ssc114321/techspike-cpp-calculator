@@ -53,6 +53,55 @@ CalculationError Parser::parse(double &result)
 // Read one numeric factor.
 CalculationError Parser::parseFactor(double &result)
 {
+    // Handle a unary sign.
+    if (current().type == TokenType::Plus ||
+        current().type == TokenType::Minus)
+    {
+        const auto sign = current().type;
+        advance();
+
+        double value = 0.0;
+        const auto error = parseFactor(value);
+
+        if (error != CalculationError::None)
+        {
+            return error;
+        }
+
+        // TODO: Negate value for Minus, otherwise keep value.
+        if (sign == TokenType::Minus)
+        {
+            value = -value;
+        }
+        // TODO: Assign result and return None.
+        result = value;
+        return CalculationError::None;
+    }
+    // Handle a parenthesized expression.
+    if (current().type == TokenType::LeftParen)
+    {
+        advance();
+
+        double value = 0.0;
+        const auto error = parseExpression(value);
+
+        if (error != CalculationError::None)
+        {
+            return error;
+        }
+
+        // TODO: Require a RightParen token.
+        if (current().type != TokenType::RightParen)
+        {
+            return CalculationError::InvalidExpression;
+        }
+        // TODO: Advance past the closing parenthesis.
+        advance();
+        // TODO: Assign result and return None.
+        result = value;
+        return CalculationError::None;
+    }
+    // Handle Number
     if (current().type != TokenType::Number)
     {
         return CalculationError::InvalidExpression;

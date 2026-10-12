@@ -43,6 +43,9 @@ int main(int argc, char *argv[])
     QPushButton clearButton("C", &window);
     QPushButton deleteButton("DEL", &window);
     QPushButton plusButton("+", &window);
+    QPushButton minusButton("-", &window);
+    QPushButton multiplyButton("*", &window);
+    QPushButton divideButton("/", &window);
     QPushButton equlsButton("=", &window);
 
     // Arrange the display and button vertically.
@@ -67,8 +70,11 @@ int main(int argc, char *argv[])
 
     keypad.addWidget(&clearButton, 3, 0);
     keypad.addWidget(&deleteButton, 3, 2);
-    keypad.addWidget(&plusButton, 4, 0);
-    keypad.addWidget(&equlsButton, 4, 2);
+    keypad.addWidget(&plusButton, 0, 3);
+    keypad.addWidget(&minusButton, 1, 3);
+    keypad.addWidget(&multiplyButton, 2, 3);
+    keypad.addWidget(&divideButton, 3, 3);
+    keypad.addWidget(&equlsButton, 4, 3);
 
     // Track whether the display contains a calculation result.
     bool resultShown = false;
@@ -78,7 +84,7 @@ int main(int argc, char *argv[])
     {
         double result = 0.0;
 
-        if (!evaluateAddition(display.text().toStdString(), result))
+        if (!evaluateExpression(display.text().toStdString(), result))
         {
             return;
         }
@@ -87,23 +93,24 @@ int main(int argc, char *argv[])
         resultShown = true;
     };
 
-    // Define the addition input action.
-    auto appendPlus = [&display, &resultShown]()
+    // Define the shared operator input action.
+    auto appendOperator = [&display, &resultShown](const QString &operation)
     {
         QString current = display.text();
+        bool isNumber = false;
 
-        // TODO: Return immediately if current already contains '+'.
-        if (current.contains("+"))
+        current.toDouble(&isNumber);
+
+        // TODO: Return if current is not a complete number.
+        if (!isNumber)
         {
             return;
         }
-        else
-        {
-            current += "+";
-            resultShown = false;
-        }
-        // TODO: Append '+' and update the display.
+        // TODO: Append operation and update the display.
+        current += operation;
         display.setText(current);
+        // TODO: Set resultShown to false.
+        resultShown = false;
     };
 
     // Define the clear action.
@@ -252,9 +259,36 @@ int main(int argc, char *argv[])
         &plusButton,
         &QPushButton::clicked,
         &window,
-        [&appendPlus]()
+        [&appendOperator]()
         {
-            appendPlus();
+            appendOperator("+");
+        });
+
+    QObject::connect(
+        &minusButton,
+        &QPushButton::clicked,
+        &window,
+        [&appendOperator]()
+        {
+            appendOperator("-");
+        });
+
+    QObject::connect(
+        &multiplyButton,
+        &QPushButton::clicked,
+        &window,
+        [&appendOperator]()
+        {
+            appendOperator("*");
+        });
+
+    QObject::connect(
+        &divideButton,
+        &QPushButton::clicked,
+        &window,
+        [&appendOperator]()
+        {
+            appendOperator("/");
         });
 
     QObject::connect(

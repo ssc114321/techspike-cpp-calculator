@@ -6,6 +6,7 @@
 #include <QGridLayout>
 #include <QKeySequence>
 #include <QShortcut>
+#include "calculator.h"
 
 int main(int argc, char *argv[])
 {
@@ -41,6 +42,8 @@ int main(int argc, char *argv[])
     // Create action buttons
     QPushButton clearButton("C", &window);
     QPushButton deleteButton("DEL", &window);
+    QPushButton plusButton("+", &window);
+    QPushButton equlsButton("=", &window);
 
     // Arrange the display and button vertically.
     QVBoxLayout layout(&window);
@@ -64,15 +67,54 @@ int main(int argc, char *argv[])
 
     keypad.addWidget(&clearButton, 3, 0);
     keypad.addWidget(&deleteButton, 3, 2);
+    keypad.addWidget(&plusButton, 4, 0);
+    keypad.addWidget(&equlsButton, 4, 2);
+
+    // Track whether the display contains a calculation result.
+    bool resultShown = false;
+
+    // Define the calculation action.
+    auto calculate = [&display, &resultShown]()
+    {
+        double result = 0.0;
+
+        if (!evaluateAddition(display.text().toStdString(), result))
+        {
+            return;
+        }
+
+        display.setText(QString::number(result, 'g', 15));
+        resultShown = true;
+    };
+
+    // Define the addition input action.
+    auto appendPlus = [&display, &resultShown]()
+    {
+        QString current = display.text();
+
+        // TODO: Return immediately if current already contains '+'.
+        if (current.contains("+"))
+        {
+            return;
+        }
+        else
+        {
+            current += "+";
+            resultShown = false;
+        }
+        // TODO: Append '+' and update the display.
+        display.setText(current);
+    };
 
     // Define the clear action.
-    auto clearInput = [&display]()
+    auto clearInput = [&display, &resultShown]()
     {
         display.setText("0");
+        resultShown = false;
     };
 
     // Define the delete action.
-    auto deleteLast = [&display]()
+    auto deleteLast = [&display, &resultShown]()
     {
         QString current = display.text();
         if (current.isEmpty() || current.size() == 1)
@@ -84,15 +126,17 @@ int main(int argc, char *argv[])
             current.chop(1);
         }
         display.setText(current);
+        resultShown = false;
     };
 
     // Define the shared digit input action.
-    auto appendDigit = [&display](const QString &digit)
+    auto appendDigit = [&display, &resultShown](const QString &digit)
     {
         QString current = display.text();
-        if (current == "0")
+        if (current == "0" || resultShown)
         {
             current = digit;
+            resultShown = false;
         }
         else
         {
@@ -204,8 +248,31 @@ int main(int argc, char *argv[])
         &window,
         deleteLast);
 
+    QObject::connect(
+        &plusButton,
+        &QPushButton::clicked,
+        &window,
+        [&appendPlus]()
+        {
+            appendPlus();
+        });
+
+    QObject::connect(
+        &equlsButton,
+        &QPushButton::clicked,
+        &window,
+        [&calculate]()
+        {
+            calculate();
+        });
+
     // Create the clear shortcut.
     QShortcut clearShortcut(QKeySequence(Qt::Key_Escape), &window);
+
+    // Create shortcuts for both Enter keys.
+    QShortcut calculateShortcut(&window);
+    calculateShortcut.setKeys({QKeySequence(Qt::Key_Return),
+                               QKeySequence(Qt::Key_Enter)});
 
     // Connect Escape to the existing clear action.
     QObject::connect(
@@ -223,6 +290,13 @@ int main(int argc, char *argv[])
         &QShortcut::activated,
         &window,
         deleteLast);
+
+    // Connect Enter to the calculation action.
+    QObject::connect(
+        &calculateShortcut,
+        &QShortcut::activated,
+        &window,
+        calculate);
 
     // Show the window.
     window.show();

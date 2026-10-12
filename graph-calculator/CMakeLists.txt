@@ -9,5 +9,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 find_package(Qt6 REQUIRED COMPONENTS Widgets)
 qt_standard_project_setup()
 
-qt_add_executable(calculator main.cpp)
+qt_add_executable(calculator
+    main.cpp
+    calculator.cpp
+)
 target_link_libraries(calculator PRIVATE Qt6::Widgets)

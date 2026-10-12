@@ -52,6 +52,8 @@ int main(int argc, char *argv[])
     QPushButton divideButton("/", &window);
     QPushButton equlsButton("=", &window);
     QPushButton decimalButton(".", &window);
+    QPushButton leftParenButton("(", &window);
+    QPushButton rightParenButton(")", &window);
 
     // Arrange the display and button vertically.
     QVBoxLayout layout(&window);
@@ -82,9 +84,35 @@ int main(int argc, char *argv[])
     keypad.addWidget(&divideButton, 3, 3);
     keypad.addWidget(&equlsButton, 4, 3);
     keypad.addWidget(&decimalButton, 4, 1);
+    keypad.addWidget(&leftParenButton, 4, 0);
+    keypad.addWidget(&rightParenButton, 4, 2);
 
     // Track whether the display contains a calculation result.
     bool resultShown = false;
+
+    // Define the shared parenthesis input action.
+    auto appendParenthesis = [&display, &resultShown](const QString &parenthesis)
+    {
+        QString current = display.text();
+
+        // TODO: For '(' at the initial "0" or after a result, start with "(".
+        if (parenthesis == "(" && (current == "0" || resultShown))
+        {
+            display.setText("(");
+            resultShown = false;
+            return;
+        }
+        // TODO: Ignore ')' when a result is shown.
+        if (parenthesis == ")" && resultShown)
+        {
+            return;
+        }
+        // TODO: Otherwise, append parenthesis.
+        current += parenthesis;
+        // TODO: Update the display and set resultShown to false.
+        display.setText(current);
+        resultShown = false;
+    };
 
     // Define the decimal input action.
     auto appendDecimal = [&display, &resultShown]()
@@ -98,12 +126,33 @@ int main(int argc, char *argv[])
             resultShown = false;
             return;
         }
+
+        // A decimal point cannot follow a closing parenthesis.
+        if (current.endsWith(')'))
+        {
+            return;
+        }
+
         // Find the start of the current operand.
         qsizetype numberStart = 0;
 
-        for (qsizetype i = 1; i < current.size(); ++i)
+        for (qsizetype i = 0; i < current.size(); ++i)
         {
             const QChar character = current.at(i);
+
+            // Start a new operand after an opening parenthesis.
+            if (character == '(')
+            {
+                numberStart = i + 1;
+                continue;
+            }
+
+            // Avoid accessing a previous character at the start.
+            if (i == 0)
+            {
+                continue;
+            }
+
             const QChar previous = current.at(i - 1);
 
             const bool isOperator =
@@ -181,23 +230,10 @@ int main(int argc, char *argv[])
         resultShown = true;
     };
 
-    // Define the shared operator input action.
+    // Append an operator and continue editing the expression.
     auto appendOperator = [&display, &resultShown](const QString &operation)
     {
-        QString current = display.text();
-        bool isNumber = false;
-
-        current.toDouble(&isNumber);
-
-        // TODO: Return if current is not a complete number.
-        if (!isNumber)
-        {
-            return;
-        }
-        // TODO: Append operation and update the display.
-        current += operation;
-        display.setText(current);
-        // TODO: Set resultShown to false.
+        display.setText(display.text() + operation);
         resultShown = false;
     };
 
@@ -404,6 +440,24 @@ int main(int argc, char *argv[])
         &QLineEdit::textChanged,
         &errorLabel,
         &QLabel::clear);
+
+    QObject::connect(
+        &leftParenButton,
+        &QPushButton::clicked,
+        &window,
+        [&appendParenthesis]()
+        {
+            appendParenthesis("(");
+        });
+
+    QObject::connect(
+        &rightParenButton,
+        &QPushButton::clicked,
+        &window,
+        [&appendParenthesis]()
+        {
+            appendParenthesis(")");
+        });
 
     // Create the clear shortcut.
     QShortcut clearShortcut(QKeySequence(Qt::Key_Escape), &window);

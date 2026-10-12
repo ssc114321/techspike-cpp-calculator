@@ -3,7 +3,7 @@
 #include <cmath>
 #include <sstream>
 
-bool evaluateExpression(const std::string &expression, double &result)
+CalculationError evaluateExpression(const std::string &expression, double &result)
 {
     std::istringstream input(expression);
 
@@ -14,14 +14,14 @@ bool evaluateExpression(const std::string &expression, double &result)
     // Read both operands and the operator.
     if (!(input >> left >> operation >> right))
     {
-        return false;
+        return CalculationError::InvalidExpression;
     }
 
     // Skip trailing whitespace and reject any remaining input.
     input >> std::ws;
     if (!input.eof())
     {
-        return false;
+        return CalculationError::InvalidExpression;
     }
 
     // Calculate according to the operator.
@@ -44,21 +44,21 @@ bool evaluateExpression(const std::string &expression, double &result)
     case '/':
         if (right == 0.0)
         {
-            return false;
+            return CalculationError::DivisionByZero;
         }
         value = left / right;
         break;
 
     default:
-        return false;
+        return CalculationError::InvalidExpression;
     }
     // Reject non-finite results.
     if (!std::isfinite(value))
     {
-        return false;
+        return CalculationError::NonFiniteResult;
     }
 
     // Assign the output only after all checks succeed.
     result = value;
-    return true;
+    return CalculationError::None;
 }

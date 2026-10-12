@@ -7,6 +7,7 @@
 #include <QKeySequence>
 #include <QShortcut>
 #include "calculator.h"
+#include <QLabel>
 
 int main(int argc, char *argv[])
 {
@@ -26,6 +27,9 @@ int main(int argc, char *argv[])
     QLineEdit display(&window);
     display.setText("0");
     display.setReadOnly(true);
+
+    // Create an error message label.
+    QLabel errorLabel(&window);
 
     // Create the digit buttons.
     QPushButton button0("0", &window);
@@ -47,9 +51,11 @@ int main(int argc, char *argv[])
     QPushButton multiplyButton("*", &window);
     QPushButton divideButton("/", &window);
     QPushButton equlsButton("=", &window);
+    QPushButton decimalButton(".", &window);
 
     // Arrange the display and button vertically.
     QVBoxLayout layout(&window);
+    layout.addWidget(&errorLabel);
     layout.addWidget(&display);
 
     // Add a grid layout for the keypad.
@@ -75,20 +81,102 @@ int main(int argc, char *argv[])
     keypad.addWidget(&multiplyButton, 2, 3);
     keypad.addWidget(&divideButton, 3, 3);
     keypad.addWidget(&equlsButton, 4, 3);
+    keypad.addWidget(&decimalButton, 4, 1);
 
     // Track whether the display contains a calculation result.
     bool resultShown = false;
 
-    // Define the calculation action.
-    auto calculate = [&display, &resultShown]()
+    // Define the decimal input action.
+    auto appendDecimal = [&display, &resultShown]()
     {
-        double result = 0.0;
+        QString current = display.text();
 
-        if (!evaluateExpression(display.text().toStdString(), result))
+        // TODO: If a result is shown, start a new input with "0." and return.
+        if (resultShown)
+        {
+            display.setText("0.");
+            resultShown = false;
+            return;
+        }
+        // Find the start of the current operand.
+        qsizetype numberStart = 0;
+
+        for (qsizetype i = 1; i < current.size(); ++i)
+        {
+            const QChar character = current.at(i);
+            const QChar previous = current.at(i - 1);
+
+            const bool isOperator =
+                character == '+' || character == '-' ||
+                character == '*' || character == '/';
+
+            const bool isExponentSign =
+                (character == '+' || character == '-') &&
+                (previous == 'e' || previous == 'E');
+
+            if (isOperator && !isExponentSign)
+            {
+                numberStart = i + 1;
+            }
+        }
+
+        QString number = current.mid(numberStart);
+        // TODO: Ignore the click if the operand already contains a decimal point.
+        if (number.contains('.') || number.contains('e', Qt::CaseInsensitive))
+        {
+            return;
+        }
+        // TODO: Append "0." for an empty operand, otherwise append ".".
+        if (number.isEmpty() || number == "-" || number == "+")
+        {
+            current += "0.";
+        }
+        else
+        {
+            current += ".";
+        }
+        // TODO: Update the display.
+        display.setText(current);
+    };
+
+    // Define the calculation action.
+    auto calculate = [&display, &resultShown, &errorLabel]()
+    {
+        // Keep the current result when calculation is requested again.
+        if (resultShown)
         {
             return;
         }
 
+        double result = 0.0;
+        const auto error = evaluateExpression(
+            display.text().toStdString(), result);
+
+        if (error != CalculationError::None)
+        {
+            switch (error)
+            {
+            case CalculationError::InvalidExpression:
+                errorLabel.setText("Check the expression.");
+                break;
+
+            case CalculationError::DivisionByZero:
+                errorLabel.setText("Cannot divide by zero.");
+                break;
+
+            case CalculationError::NonFiniteResult:
+                errorLabel.setText("Result is out of range.");
+                break;
+
+            case CalculationError::None:
+                break;
+            }
+
+            return;
+        }
+
+        // TODO: Clear the error, display the result, and update resultShown.
+        errorLabel.clear();
         display.setText(QString::number(result, 'g', 15));
         resultShown = true;
     };
@@ -114,8 +202,9 @@ int main(int argc, char *argv[])
     };
 
     // Define the clear action.
-    auto clearInput = [&display, &resultShown]()
+    auto clearInput = [&display, &resultShown, &errorLabel]()
     {
+        errorLabel.clear();
         display.setText("0");
         resultShown = false;
     };
@@ -299,6 +388,22 @@ int main(int argc, char *argv[])
         {
             calculate();
         });
+
+    QObject::connect(
+        &decimalButton,
+        &QPushButton::clicked,
+        &window,
+        [&appendDecimal]()
+        {
+            appendDecimal();
+        });
+
+    // Clear the error when the displayed text changes.
+    QObject::connect(
+        &display,
+        &QLineEdit::textChanged,
+        &errorLabel,
+        &QLabel::clear);
 
     // Create the clear shortcut.
     QShortcut clearShortcut(QKeySequence(Qt::Key_Escape), &window);

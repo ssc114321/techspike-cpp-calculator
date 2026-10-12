@@ -2,5 +2,16 @@
 
 #include <string>
 
-// Evaluate a binary arithmetic expression and report success.
-bool evaluateExpression(const std::string &expression, double &result);
+// Describe the outcome of an evaluation.
+enum class CalculationError
+{
+    None,
+    InvalidExpression,
+    DivisionByZero,
+    NonFiniteResult
+};
+
+// Evaluate an expression and return its error status.
+CalculationError evaluateExpression(
+    const std::string &expression,
+    double &result);

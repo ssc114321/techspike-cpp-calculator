@@ -8,6 +8,8 @@
 #include <QShortcut>
 #include "calculator.h"
 #include <QLabel>
+#include <QFont>
+#include <QSizePolicy>
 
 int main(int argc, char *argv[])
 {
@@ -20,16 +22,32 @@ int main(int argc, char *argv[])
     // Set the window title.
     window.setWindowTitle("Graph Calculator");
 
-    // Set the window size to 800 by 600 pixels.
-    window.resize(800, 600);
+    // Set a compact initial size and a usable minimum size.
+    window.setMinimumSize(360, 520);
+    window.resize(420, 600);
 
     // Create a read-only display initialized to "0".
     QLineEdit display(&window);
     display.setText("0");
     display.setReadOnly(true);
 
+    // Enlarge and right-align the display text.
+    QFont displayFont = display.font();
+    displayFont.setPointSize(28);
+    display.setFont(displayFont);
+
+    display.setFixedHeight(80);
+    display.setAlignment(Qt::AlignRight);
+    display.setTextMargins(12, 0, 12, 0);
+
     // Create an error message label.
     QLabel errorLabel(&window);
+
+    // Reserve a small, stable area for error messages.
+    errorLabel.setFixedHeight(24);
+    errorLabel.setSizePolicy(
+        QSizePolicy::Expanding,
+        QSizePolicy::Fixed);
 
     // Create the digit buttons.
     QPushButton button0("0", &window);
@@ -55,14 +73,31 @@ int main(int argc, char *argv[])
     QPushButton leftParenButton("(", &window);
     QPushButton rightParenButton(")", &window);
 
-    // Arrange the display and button vertically.
-    QVBoxLayout layout(&window);
-    layout.addWidget(&errorLabel);
-    layout.addWidget(&display);
+    // Apply consistent sizing to every calculator button.
+    QFont buttonFont = button0.font();
+    buttonFont.setPointSize(16);
 
-    // Add a grid layout for the keypad.
+    for (QPushButton *button : window.findChildren<QPushButton *>())
+    {
+        button->setFont(buttonFont);
+        button->setMinimumSize(64, 56);
+        button->setSizePolicy(
+            QSizePolicy::Expanding,
+            QSizePolicy::Expanding);
+    }
+
+    // Arrange the display, error message, and keypad.
+    QVBoxLayout layout(&window);
+    layout.setContentsMargins(16, 16, 16, 16);
+    layout.setSpacing(10);
+
+    layout.addWidget(&display);
+    layout.addWidget(&errorLabel);
+
+    // Give the remaining height to the keypad.
     QGridLayout keypad;
-    layout.addLayout(&keypad);
+    keypad.setSpacing(8);
+    layout.addLayout(&keypad, 1);
 
     // Place the buttons in the grid.
     keypad.addWidget(&button0, 3, 1);
@@ -86,6 +121,17 @@ int main(int argc, char *argv[])
     keypad.addWidget(&decimalButton, 4, 1);
     keypad.addWidget(&leftParenButton, 4, 0);
     keypad.addWidget(&rightParenButton, 4, 2);
+
+    // Distribute keypad space evenly.
+    for (int row = 0; row < 5; ++row)
+    {
+        keypad.setRowStretch(row, 1);
+    }
+
+    for (int column = 0; column < 4; ++column)
+    {
+        keypad.setColumnStretch(column, 1);
+    }
 
     // Track whether the display contains a calculation result.
     bool resultShown = false;
